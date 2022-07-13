@@ -1,5 +1,8 @@
 # Message Workflows
 
+> This page was migrated from the Trezor Wiki. The content here may contain
+outdated information.
+
 In general, the API implements a simple request-response protocol. The
 computer sends a request to the device and the device sends back a
 response. The response can be a simple Success message, a Failure
@@ -77,6 +80,10 @@ used to get Ed25519 or
 NIST256P1 public keys.
 
 ## SignTx
+
+> The following may contain imprecise/obsolete information. Refer to
+[Bitcoin signing flow](communication/bitcoin-signing.md) for more relevant
+information.
 
 Signing a transaction is a little bit complicated. The reason is that
 transactions can be several hundred kilobytes in size, but Trezor has

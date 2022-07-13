@@ -36,6 +36,9 @@
 #include "rand.h"
 #include "rfc6979.h"
 #include "secp256k1.h"
+#ifdef USE_SECP256K1_ZKP_ECDSA
+#include "zkp_ecdsa.h"
+#endif
 
 // Set cp2 = cp1
 void point_copy(const curve_point *cp1, curve_point *cp2) { *cp2 = *cp1; }
@@ -679,6 +682,13 @@ int ecdsa_sign(const ecdsa_curve *curve, HasherType hasher_sign,
 int ecdsa_sign_digest(const ecdsa_curve *curve, const uint8_t *priv_key,
                       const uint8_t *digest, uint8_t *sig, uint8_t *pby,
                       int (*is_canonical)(uint8_t by, uint8_t sig[64])) {
+#ifdef USE_SECP256K1_ZKP_ECDSA
+  if (curve == &secp256k1 && is_canonical == NULL) {
+    return zkp_ecdsa_sign_digest(curve, priv_key, digest, sig, pby,
+                                 is_canonical);
+  }
+#endif
+
   int i = 0;
   curve_point R = {0};
   bignum256 k = {0}, z = {0}, randk = {0};
@@ -784,6 +794,12 @@ int ecdsa_sign_digest(const ecdsa_curve *curve, const uint8_t *priv_key,
 // returns 0 on success
 int ecdsa_get_public_key33(const ecdsa_curve *curve, const uint8_t *priv_key,
                            uint8_t *pub_key) {
+#ifdef USE_SECP256K1_ZKP_ECDSA
+  if (curve == &secp256k1) {
+    return zkp_ecdsa_get_public_key33(curve, priv_key, pub_key);
+  }
+#endif
+
   curve_point R = {0};
   bignum256 k = {0};
 
@@ -809,6 +825,12 @@ int ecdsa_get_public_key33(const ecdsa_curve *curve, const uint8_t *priv_key,
 // returns 0 on success
 int ecdsa_get_public_key65(const ecdsa_curve *curve, const uint8_t *priv_key,
                            uint8_t *pub_key) {
+#ifdef USE_SECP256K1_ZKP_ECDSA
+  if (curve == &secp256k1) {
+    return zkp_ecdsa_get_public_key65(curve, priv_key, pub_key);
+  }
+#endif
+
   curve_point R = {0};
   bignum256 k = {0};
 
@@ -1022,6 +1044,12 @@ int ecdsa_verify(const ecdsa_curve *curve, HasherType hasher_sign,
 int ecdsa_recover_pub_from_sig(const ecdsa_curve *curve, uint8_t *pub_key,
                                const uint8_t *sig, const uint8_t *digest,
                                int recid) {
+#ifdef USE_SECP256K1_ZKP_ECDSA
+  if (curve == &secp256k1) {
+    return zkp_ecdsa_recover_pub_from_sig(curve, pub_key, sig, digest, recid);
+  }
+#endif
+
   bignum256 r = {0}, s = {0}, e = {0};
   curve_point cp = {0}, cp2 = {0};
 
@@ -1078,6 +1106,12 @@ int ecdsa_recover_pub_from_sig(const ecdsa_curve *curve, uint8_t *pub_key,
 // returns 0 if verification succeeded
 int ecdsa_verify_digest(const ecdsa_curve *curve, const uint8_t *pub_key,
                         const uint8_t *sig, const uint8_t *digest) {
+#ifdef USE_SECP256K1_ZKP_ECDSA
+  if (curve == &secp256k1) {
+    return zkp_ecdsa_verify_digest(curve, pub_key, sig, digest);
+  }
+#endif
+
   curve_point pub = {0}, res = {0};
   bignum256 r = {0}, s = {0}, z = {0};
   int result = 0;

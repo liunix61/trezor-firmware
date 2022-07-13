@@ -31,9 +31,6 @@
 #include "secp256k1.h"
 #include "transaction.h"
 #include "zkp_bip340.h"
-#ifdef USE_SECP256K1_ZKP_ECDSA
-#include "zkp_ecdsa.h"
-#endif
 
 static uint32_t change_count;
 static const CoinInfo *coin;
@@ -2270,16 +2267,8 @@ static bool signing_verify_orig_nonlegacy_input(TxInputType *orig_input) {
       signing_hash_bip143(&orig_info, orig_input, hash);
     }
 
-#ifdef USE_SECP256K1_ZKP_ECDSA
-    if (coin->curve->params == &secp256k1) {
-      valid = zkp_ecdsa_verify_digest(coin->curve->params, node.public_key, sig,
-                                      hash) == 0;
-    } else
-#endif
-    {
-      valid = ecdsa_verify_digest(coin->curve->params, node.public_key, sig,
-                                  hash) == 0;
-    }
+    valid = ecdsa_verify_digest(coin->curve->params, node.public_key, sig,
+                                hash) == 0;
   }
 
   if (!valid) {
@@ -2299,17 +2288,8 @@ static bool signing_verify_orig_legacy_input(void) {
   uint8_t hash[32] = {0};
   tx_hash_final(&ti, hash, false);
 
-  bool valid = false;
-#ifdef USE_SECP256K1_ZKP_ECDSA
-  if (coin->curve->params == &secp256k1) {
-    valid = zkp_ecdsa_verify_digest(coin->curve->params, node.public_key, sig,
-                                    hash) == 0;
-  } else
-#endif
-  {
-    valid = ecdsa_verify_digest(coin->curve->params, node.public_key, sig,
-                                hash) == 0;
-  }
+  bool valid =
+      ecdsa_verify_digest(coin->curve->params, node.public_key, sig, hash) == 0;
 
   if (!valid) {
     fsm_sendFailure(FailureType_Failure_DataError, _("Invalid signature."));
@@ -2547,18 +2527,8 @@ static bool signing_sign_ecdsa(TxInputType *txinput, const uint8_t *private_key,
   resp.serialized.has_signature = true;
   resp.serialized.has_serialized_tx = true;
 
-  int ret = 0;
-#ifdef USE_SECP256K1_ZKP_ECDSA
-  if (coin->curve->params == &secp256k1) {
-    ret = zkp_ecdsa_sign_digest(coin->curve->params, private_key, hash, sig,
-                                NULL, NULL);
-  } else
-#endif
-  {
-    ret = ecdsa_sign_digest(coin->curve->params, private_key, hash, sig, NULL,
-                            NULL);
-  }
-  if (ret != 0) {
+  if (ecdsa_sign_digest(coin->curve->params, private_key, hash, sig, NULL,
+                        NULL) != 0) {
     fsm_sendFailure(FailureType_Failure_ProcessError, _("Signing failed"));
     signing_abort();
     return false;
